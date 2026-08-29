@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  passwordHash      String
+  role              String             @default("USER") // USER, ADMIN
+  currency          String             @default("INR")
+  monthlyIncome     Float              @default(85000.0)
+  riskProfile       String             @default("MODERATE")
+  tier              String             @default("FREE") // FREE, PRO, ENTERPRISE
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  recurringPayments RecurringPayment[]
+  anomalies         Anomaly[]
+  paymentRecords    PaymentRecord[]
+  notifications     Notification[]
+}
+
+model Transaction {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount               Float
+  type                 String   // INCOME, EXPENSE, TRANSFER, INVESTMENT
+  category             String   // Food & Dining, Shopping, Housing & Rent, Utilities, Entertainment, Healthcare, Transportation, Investment, Salary, Freelance, Other
+  subCategory          String?
+  description          String
+  merchant             String?
+  date                 DateTime @default(now())
+  paymentMethod        String   @default("UPI") // UPI, CARD, NETBANKING, CASH
+  aiCategoryConfidence Float    @default(0.95)
+  aiNote               String?
+  isAnomaly            Boolean  @default(false)
+  anomalyReason        String?
+  isRecurring          Boolean  @default(false)
+  receiptUrl           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Budget {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       String
+  limitAmount    Float
+  period         String   @default("MONTHLY") // MONTHLY, WEEKLY
+  alertThreshold Float    @default(80.0)
+  rollover       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Goal {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  category      String    @default("SAVINGS")
+  targetAmount  Float
+  currentAmount Float     @default(0.0)
+  deadline      DateTime?
+  colorHex      String    @default("#6366F1")
+  status        String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, PAUSED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model RecurringPayment {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  amount       Float
+  billingCycle String   @default("MONTHLY") // MONTHLY, QUARTERLY, YEARLY
+  category     String
+  nextDueDate  DateTime
+  status       String   @default("ACTIVE") // ACTIVE, PAUSED, CANCELLED
+  autoPay      Boolean  @default(false)
+  merchant     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Anomaly {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionId String?
+  title         String
+  description   String
+  severity      String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status        String   @default("UNRESOLVED") // UNRESOLVED, DISMISSED, CONFIRMED
+  detectedAt    DateTime @default(now())
+}
+
+model PaymentRecord {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  razorpayOrderId   String
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Float
+  currency          String   @default("INR")
+  planTier          String   @default("PRO") // PRO, ENTERPRISE, SAVINGS_TOPUP
+  status            String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  paymentMethod     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // ALERT, REMINDER, INSIGHT, SUCCESS, INFO
+  read      Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+}
+
+model AISession {
+  id          String   @id @default(uuid())
+  userId      String
+  prompt      String
+  response    String
+  contextData String?
+  createdAt   DateTime @default(now())
+}
