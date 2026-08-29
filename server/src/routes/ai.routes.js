@@ -8,12 +8,13 @@ const router = express.Router();
 // Chat with FinAdvisor AI
 router.post('/chat', authenticate, async (req, res) => {
   try {
-    const { prompt } = req.body;
-    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+    const rawPrompt = req.body.prompt || req.body.message || '';
+    if (!rawPrompt || typeof rawPrompt !== 'string' || rawPrompt.trim() === '') {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const result = await chatFinancialAdvisor(req.user.id, prompt.trim());
+    const prompt = rawPrompt.trim();
+    const result = await chatFinancialAdvisor(req.user.id, prompt);
     res.json(result);
   } catch (error) {
     console.error('AI Advisor error:', error);
