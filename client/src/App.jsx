@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { Layout } from './components/layout/Layout';
@@ -18,41 +18,8 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 
-// Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#090D16] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
-
-// Admin Only Wrapper
-const AdminRoute = ({ children }) => {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#090D16] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+// Open Route Wrapper (Zero Login Barrier)
+const OpenRoute = ({ children }) => {
   return children;
 };
 
@@ -63,17 +30,17 @@ function App() {
         <NotificationProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public Auth Routes */}
+              {/* Optional Login / Register views */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
-              {/* Protected App Routes */}
+              {/* Main Application Cockpit Routes */}
               <Route
                 path="/"
                 element={
-                  <ProtectedRoute>
+                  <OpenRoute>
                     <Layout />
-                  </ProtectedRoute>
+                  </OpenRoute>
                 }
               >
                 <Route index element={<Navigate to="/dashboard" replace />} />
@@ -87,14 +54,7 @@ function App() {
                 <Route path="pricing" element={<Payments />} />
 
                 {/* Admin Cockpit */}
-                <Route
-                  path="admin"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
+                <Route path="admin" element={<AdminDashboard />} />
               </Route>
 
               {/* Fallback */}
