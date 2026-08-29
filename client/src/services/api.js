@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as synthetic from './syntheticData';
 
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL && !import.meta.env.VITE_API_BASE_URL.includes('localhost:5000')) {
     return import.meta.env.VITE_API_BASE_URL;
   }
@@ -117,7 +117,7 @@ api.interceptors.response.use(
       let promptText = '';
       try {
         if (error.config?.data) {
-          const parsed = JSON.parse(error.config.data);
+          const parsed = typeof error.config.data === 'string' ? JSON.parse(error.config.data) : error.config.data;
           promptText = parsed.prompt || parsed.message || '';
         }
       } catch (e) {}
@@ -148,16 +148,40 @@ api.interceptors.response.use(
       return Promise.resolve({ data: synthetic.SYNTHETIC_HEALTH_SCORE });
     }
     if (url.includes('/analytics/cashflow-history')) {
-      return Promise.resolve({ data: { history: synthetic.SYNTHETIC_CASHFLOW } });
+      return Promise.resolve({ data: synthetic.SYNTHETIC_CASHFLOW });
     }
     if (url.includes('/analytics/category-breakdown')) {
-      return Promise.resolve({ data: { breakdown: synthetic.SYNTHETIC_CATEGORY_BREAKDOWN } });
+      return Promise.resolve({ data: { categories: synthetic.SYNTHETIC_CATEGORY_BREAKDOWN, breakdown: synthetic.SYNTHETIC_CATEGORY_BREAKDOWN } });
+    }
+    if (url.includes('/analytics/forecast')) {
+      return Promise.resolve({
+        data: {
+          historicalAverage: 2313,
+          projectedTotalExpense: 69400,
+          predictions: Array.from({ length: 30 }, (_, i) => ({
+            day: i + 1,
+            predictedExpense: 2300 + (i % 7 === 5 || i % 7 === 6 ? 1200 : 0),
+            upperBound: 3200,
+            lowerBound: 1600
+          }))
+        }
+      });
+    }
+    if (url.includes('/transactions/preview-category')) {
+      return Promise.resolve({
+        data: {
+          category: 'Shopping',
+          confidence: 0.95,
+          isAnomaly: false,
+          isRecurring: false
+        }
+      });
     }
     if (url.includes('/transactions')) {
       return Promise.resolve({
         data: {
           transactions: synthetic.SYNTHETIC_TRANSACTIONS,
-          pagination: { total: synthetic.SYNTHETIC_TRANSACTIONS.length, page: 1, limit: 15, pages: 1 }
+          pagination: { total: synthetic.SYNTHETIC_TRANSACTIONS.length, page: 1, totalPages: 1, limit: 15 }
         }
       });
     }
@@ -175,16 +199,66 @@ api.interceptors.response.use(
     if (url.includes('/analytics/recurring')) {
       return Promise.resolve({
         data: {
-          recurringPayments: synthetic.SYNTHETIC_RECURRING,
-          summary: { totalMonthlyRecurring: 54626, monthlyBurdenPercentage: 43.7 }
+          activeSubscriptions: synthetic.SYNTHETIC_RECURRING,
+          detectedSubscriptions: synthetic.SYNTHETIC_RECURRING.slice(0, 3),
+          totalMonthlyRecurring: 54626,
+          subscriptionBurdenPercentage: 43.7
         }
       });
     }
     if (url.includes('/analytics/anomalies')) {
       return Promise.resolve({ data: { anomalies: synthetic.SYNTHETIC_ANOMALIES } });
     }
+    if (url.includes('/payments/plans')) {
+      return Promise.resolve({
+        data: {
+          plans: [
+            { id: 'free', name: 'Starter', priceINR: 0, priceUSD: 0, description: 'Core cash flow monitoring and basic ledger.' },
+            { id: 'pro', name: 'Pro Intelligence', priceINR: 499, priceUSD: 6, description: 'Autonomous AI advisor, 30-day forecast, and anomaly radar.' },
+            { id: 'enterprise', name: 'Enterprise CFO', priceINR: 1999, priceUSD: 24, description: 'Full risk telemetry, multi-entity analytics, and dedicated support.' }
+          ]
+        }
+      });
+    }
+    if (url.includes('/payments/history')) {
+      return Promise.resolve({
+        data: {
+          payments: [
+            { id: 'pay-1', amount: 499, planTier: 'PRO', status: 'SUCCESS', razorpayPaymentId: 'pay_test_001', createdAt: new Date().toISOString() }
+          ]
+        }
+      });
+    }
     if (url.includes('/admin/stats')) {
       return Promise.resolve({ data: { stats: synthetic.SYNTHETIC_ADMIN_STATS } });
+    }
+    if (url.includes('/admin/users')) {
+      return Promise.resolve({
+        data: {
+          users: [
+            { id: 'u-1', name: 'Alex Mercer', email: 'alex.fintech@aifinance.io', role: 'USER', tier: 'PRO', createdAt: new Date().toISOString(), _count: { transactions: 62 } },
+            { id: 'u-2', name: 'Chief Financial Admin', email: 'admin@aifinance.io', role: 'ADMIN', tier: 'ENTERPRISE', createdAt: new Date().toISOString(), _count: { transactions: 15 } }
+          ]
+        }
+      });
+    }
+    if (url.includes('/admin/payments')) {
+      return Promise.resolve({
+        data: {
+          payments: [
+            { id: 'p-1', user: { name: 'Alex Mercer', email: 'alex.fintech@aifinance.io' }, amount: 499, planTier: 'PRO', status: 'SUCCESS', razorpayPaymentId: 'pay_rzp_mock_1', createdAt: new Date().toISOString() }
+          ]
+        }
+      });
+    }
+    if (url.includes('/notifications')) {
+      return Promise.resolve({
+        data: {
+          notifications: [
+            { id: 'notif-1', title: 'Monthly Cash Flow Optimized', message: 'Your Health Score reached 86/100 (Excellent).', type: 'INSIGHT', read: false, createdAt: new Date().toISOString() }
+          ]
+        }
+      });
     }
     if (url.includes('/auth/me') || url.includes('/auth/demo-login')) {
       return Promise.resolve({ data: { token: 'synthetic-jwt-token', user: synthetic.SYNTHETIC_USER } });
@@ -203,14 +277,21 @@ export const authAPI = {
 };
 
 export const transactionsAPI = {
+  list: (params) => api.get('/transactions', { params }),
   getAll: (params) => api.get('/transactions', { params }),
   getById: (id) => api.get(`/transactions/${id}`),
   create: (data) => api.post('/transactions', data),
   update: (id, data) => api.put(`/transactions/${id}`, data),
   delete: (id) => api.delete(`/transactions/${id}`),
+  aiCategorize: (data) => api.post('/transactions/preview-category', data),
   previewAICategory: (description, amount) =>
     api.post('/transactions/preview-category', { description, amount }),
   exportCSV: () => api.get('/transactions/export/csv', { responseType: 'blob' }),
+  exportCsvUrl: () => `${getApiBaseUrl()}/transactions/export/csv`,
+  uploadReceipt: (formData) =>
+    api.post('/transactions/scan-receipt', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
   scanReceipt: (formData) =>
     api.post('/transactions/scan-receipt', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -218,19 +299,31 @@ export const transactionsAPI = {
 };
 
 export const budgetsAPI = {
+  list: () => api.get('/budgets'),
   getAll: () => api.get('/budgets'),
   create: (data) => api.post('/budgets', data),
   update: (id, data) => api.put(`/budgets/${id}`, data),
   delete: (id) => api.delete(`/budgets/${id}`)
 };
 
+export const goalsAPI = {
+  list: () => api.get('/goals'),
+  getAll: () => api.get('/goals'),
+  create: (data) => api.post('/goals', data),
+  update: (id, data) => api.put(`/goals/${id}`, data),
+  addFunds: (id, amount) => api.post(`/goals/${id}/add-funds`, { amount }),
+  delete: (id) => api.delete(`/goals/${id}`)
+};
+
 export const analyticsAPI = {
   getHealthScore: () => api.get('/analytics/health-score'),
+  getCashflowHistory: (months = 6) => api.get('/analytics/cashflow-history', { params: { months } }),
   getCashFlowHistory: (months = 6) => api.get('/analytics/cashflow-history', { params: { months } }),
   getCategoryBreakdown: () => api.get('/analytics/category-breakdown'),
   getForecast: (days = 30) => api.get('/analytics/forecast', { params: { days } }),
   getAnomalies: () => api.get('/analytics/anomalies'),
   dismissAnomaly: (id) => api.put(`/analytics/anomalies/${id}/dismiss`),
+  getRecurring: () => api.get('/analytics/recurring'),
   getRecurringPayments: () => api.get('/analytics/recurring')
 };
 
@@ -243,18 +336,13 @@ export const aiAdvisorAPI = {
 
 export const paymentsAPI = {
   getPlans: () => api.get('/payments/plans'),
-  createOrder: (planTier, billingCycle) =>
-    api.post('/payments/create-order', { planTier, billingCycle }),
+  createOrder: (data) => {
+    const payload = typeof data === 'object' ? data : { planTier: data };
+    return api.post('/payments/create-order', payload);
+  },
   verifyPayment: (data) => api.post('/payments/verify', data),
-  getPaymentHistory: () => api.get('/payments/history')
-};
-
-export const goalsAPI = {
-  getAll: () => api.get('/goals'),
-  create: (data) => api.post('/goals', data),
-  update: (id, data) => api.put(`/goals/${id}`, data),
-  addFunds: (id, amount) => api.post(`/goals/${id}/add-funds`, { amount }),
-  delete: (id) => api.delete(`/goals/${id}`)
+  getPaymentHistory: () => api.get('/payments/history'),
+  getHistory: () => api.get('/payments/history')
 };
 
 export const notificationsAPI = {
@@ -264,18 +352,19 @@ export const notificationsAPI = {
   delete: (id) => api.delete(`/notifications/${id}`)
 };
 
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUser: (id, data) => api.put(`/admin/users/${id}/role`, data),
+  updateUserRole: (id, role, tier) => api.put(`/admin/users/${id}/role`, { role, tier }),
+  getPayments: (params) => api.get('/admin/payments', { params })
+};
+
 export const transactionAPI = transactionsAPI;
 export const budgetAPI = budgetsAPI;
 export const goalAPI = goalsAPI;
 export const paymentAPI = paymentsAPI;
 export const aiAPI = aiAdvisorAPI;
 export const notificationAPI = notificationsAPI;
-
-export const adminAPI = {
-  getStats: () => api.get('/admin/stats'),
-  getUsers: (params) => api.get('/admin/users', { params }),
-  updateUserRole: (id, role, tier) => api.put(`/admin/users/${id}/role`, { role, tier }),
-  getPayments: (params) => api.get('/admin/payments', { params })
-};
 
 export default api;
