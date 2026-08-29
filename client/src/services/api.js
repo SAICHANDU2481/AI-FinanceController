@@ -1,6 +1,21 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+  // If explicitly configured with a remote URL, use it
+  if (import.meta.env.VITE_API_BASE_URL && !import.meta.env.VITE_API_BASE_URL.includes('localhost:5000')) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // When deployed (e.g. on Vercel, or accessed via mobile/network), use relative '/api'
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '/api';
+  }
+
+  // Local development default
+  return import.meta.env.VITE_API_BASE_URL || '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
