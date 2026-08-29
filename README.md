@@ -1,10 +1,16 @@
 # ⚡ AI Finance Controller — Autonomous Fintech Intelligence Platform
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel%20App-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://ai-finance-controller-puce.vercel.app/dashboard)
 ![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite%20%2B%20Tailwind-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Prisma](https://img.shields.io/badge/ORM-Prisma%20(PostgreSQL%20%2F%20SQLite)-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Test%20Mode-0C2340?style=for-the-badge&logo=razorpay&logoColor=white)
 ![AI](https://img.shields.io/badge/AI-Grounded%20Fintech%20LLM-6366F1?style=for-the-badge)
+
+🚀 **Live Deployment**: **[https://ai-finance-controller-puce.vercel.app/dashboard](https://ai-finance-controller-puce.vercel.app/dashboard)**  
+*(Instant direct access — zero credentials/login barriers with pre-loaded synthetic multi-month fintech dataset)*
+
+---
 
 **AI Finance Controller** is a next-generation autonomous fintech platform built to give users total control over their financial health, cash flow projections, and spending discipline. Featuring zero-hallucination AI advice grounded directly in real database transactions, automated anomaly detection, recurring subscription detection, and complete Razorpay Test Mode checkout with HMAC SHA-256 verification.
 
@@ -40,7 +46,14 @@
 
 ---
 
-## 🚀 Quick Start
+## 🌐 Live Demo & Instant Exploration
+
+* **Live App URL:** **[https://ai-finance-controller-puce.vercel.app/dashboard](https://ai-finance-controller-puce.vercel.app/dashboard)**
+* **Default Active Profile:** Alex Mercer (Pro Intelligence Tier) & Chief Financial Admin
+
+---
+
+## 🚀 Local Quick Start
 
 ### 1. Clone & Install Dependencies
 ```bash
@@ -82,13 +95,6 @@ npm run dev
 * **Frontend**: `http://localhost:5173`
 * **Backend API**: `http://localhost:5000/api`
 * **Health Check**: `http://localhost:5000/api/health`
-
----
-
-## 🔑 Demo Accounts (1-Click Login)
-
-* **Demo User (Alex Mercer - Pro Tier)**: `alex.fintech@aifinance.io` / `demo12345`
-* **Demo Admin (Chief Risk Officer)**: `admin@aifinance.io` / `admin12345`
 
 ---
 
