@@ -103,12 +103,12 @@ router.post('/login', authLimiter, async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'No account found with this email. Please register by clicking "Create one now" below, or use the 1-Click Demo buttons.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Incorrect password. Please try again or use 1-Click Demo login.' });
     }
 
     const token = generateToken(user);
@@ -127,7 +127,7 @@ router.post('/login', authLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed due to server error' });
+    res.status(500).json({ error: `Authentication service notice: ${error.message || 'Database initialization required'}` });
   }
 });
 
